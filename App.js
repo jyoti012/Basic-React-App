@@ -12,13 +12,14 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Scanner, {
   Filters,
   RectangleOverlay,
 } from 'react-native-rectangle-scanner';
-// import ScannerFilters from './Filters';
+import ScannerFilters from './Filters';
 
 const styles = StyleSheet.create({
   button: {
@@ -188,6 +189,8 @@ export default class App extends PureComponent {
         previewHeightPercent: 1,
         previewWidthPercent: 1,
       },
+      capturedURI:
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAzCAYAAAA6oTAqAAAAEXRFWHRTb2Z0d2FyZQBwbmdjcnVzaEB1SfMAAABQSURBVGje7dSxCQBACARB+2/ab8BEeQNhFi6WSYzYLYudDQYGBgYGBgYGBgYGBgYGBgZmcvDqYGBgmhivGQYGBgYGBgYGBgYGBgYGBgbmQw+P/eMrC5UTVAAAAABJRU5ErkJggg==',
     };
 
     this.camera = React.createRef();
@@ -339,11 +342,22 @@ export default class App extends PureComponent {
   // The picture was taken and cached. You can now go on to using it.
   onPictureProcessed = event => {
     this.props.onPictureProcessed(event);
+    console.log(event);
     this.setState({
       takingPicture: false,
       processingImage: false,
       showScannerView: this.props.cameraIsOn || false,
+      capturedURI: event,
     });
+    // return (
+    //   <Image
+    //     style={{
+    //       width: 50,
+    //       height: 50,
+    //     }}
+    //     source={require(this.state.capturedURI)}
+    //   />
+    // );
   };
 
   // Flashes the screen on capture
@@ -445,10 +459,10 @@ export default class App extends PureComponent {
                 },
               ]}>
               {this.renderFlashControl()}
-              {/* <ScannerFilters
+              <ScannerFilters
                 filterId={this.state.filterId}
                 onFilterIdChange={this.onFilterIdChange}
-              /> */}
+              />
               {this.props.hideSkip ? null : (
                 <View style={[styles.buttonGroup, {marginLeft: 8}]}>
                   <TouchableOpacity
@@ -499,10 +513,10 @@ export default class App extends PureComponent {
               {justifyContent: 'flex-end', marginBottom: 20},
             ]}>
             {this.renderFlashControl()}
-            {/* <ScannerFilters
+            <ScannerFilters
               filterId={this.state.filterId}
               onFilterIdChange={this.onFilterIdChange}
-            /> */}
+            />
           </View>
           <View style={[styles.cameraOutline, disabledStyle]}>
             <TouchableOpacity
@@ -519,7 +533,7 @@ export default class App extends PureComponent {
                   onPress={cameraIsDisabled ? () => null : this.props.onSkip}
                   activeOpacity={0.8}>
                   <Icon
-                    name="md-arrow-round-forward"
+                    name="ios-heart-circle"
                     size={40}
                     color="white"
                     style={styles.buttonIcon}
@@ -578,10 +592,10 @@ export default class App extends PureComponent {
                   marginBottom: this.props.hideSkip ? 0 : 16,
                 },
               ]}>
-              {/* <ScannerFilters
+              <ScannerFilters
                 filterId={this.state.filterId}
                 onFilterIdChange={this.onFilterIdChange}
-              /> */}
+              />
               {this.renderFlashControl()}
             </View>
             <View style={styles.buttonGroup}>
@@ -591,7 +605,7 @@ export default class App extends PureComponent {
                   onPress={cameraIsDisabled ? () => null : this.props.onSkip}
                   activeOpacity={0.8}>
                   <Icon
-                    name="md-arrow-round-forward"
+                    name="airplane"
                     size={40}
                     color="white"
                     style={styles.buttonIcon}
@@ -658,11 +672,11 @@ export default class App extends PureComponent {
             borderColor="rgb(255,181,6)"
             borderWidth={4}
             // == These let you auto capture and change the overlay style on detection ==
-            // detectedBackgroundColor="rgba(255,181,6, 0.3)"
-            // detectedBorderWidth={6}
-            // detectedBorderColor="rgb(255,218,124)"
-            // onDetectedCapture={this.capture}
-            // allowDetection
+            detectedBackgroundColor="rgba(255,181,6, 0.3)"
+            detectedBorderWidth={6}
+            detectedBorderColor="rgb(255,218,124)"
+            onDetectedCapture={this.capture}
+            allowDetection
           />
         );
       }
@@ -694,7 +708,27 @@ export default class App extends PureComponent {
             }
             style={styles.scanner}
           />
-          {rectangleOverlay}
+          <Image
+            style={{
+              width: 100,
+              height: 100,
+            }}
+            source={{
+              isStatic: true,
+              uri: this.state.capturedURI.initialImage,
+            }}
+          />
+          <Image
+            style={{
+              width: 50,
+              height: 50,
+            }}
+            source={{
+              isStatic: true,
+              uri: 'https://reactnative.dev/img/tiny_logo.png',
+            }}
+          />
+          {/* {rectangleOverlay} */}
           <Animated.View
             style={{
               ...styles.overlay,
@@ -749,7 +783,7 @@ export default class App extends PureComponent {
                 onPress={this.props.onSkip}
                 activeOpacity={0.8}>
                 <Icon
-                  name="md-arrow-round-forward"
+                  name="ios-file-tray"
                   size={40}
                   color="white"
                   style={styles.buttonIcon}
