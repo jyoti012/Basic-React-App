@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
   Image,
+  TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Scanner, {
@@ -189,8 +190,8 @@ export default class App extends PureComponent {
         previewHeightPercent: 1,
         previewWidthPercent: 1,
       },
-      capturedURI:
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAzCAYAAAA6oTAqAAAAEXRFWHRTb2Z0d2FyZQBwbmdjcnVzaEB1SfMAAABQSURBVGje7dSxCQBACARB+2/ab8BEeQNhFi6WSYzYLYudDQYGBgYGBgYGBgYGBgYGBgZmcvDqYGBgmhivGQYGBgYGBgYGBgYGBgYGBgbmQw+P/eMrC5UTVAAAAABJRU5ErkJggg==',
+      capturedURI: null,
+      documentTitle: '',
     };
 
     this.camera = React.createRef();
@@ -342,22 +343,13 @@ export default class App extends PureComponent {
   // The picture was taken and cached. You can now go on to using it.
   onPictureProcessed = event => {
     this.props.onPictureProcessed(event);
-    console.log(event);
     this.setState({
       takingPicture: false,
       processingImage: false,
       showScannerView: this.props.cameraIsOn || false,
       capturedURI: event,
+      loadingCamera: false,
     });
-    // return (
-    //   <Image
-    //     style={{
-    //       width: 50,
-    //       height: 50,
-    //     }}
-    //     source={require(this.state.capturedURI)}
-    //   />
-    // );
   };
 
   // Flashes the screen on capture
@@ -439,128 +431,33 @@ export default class App extends PureComponent {
   // Renders the camera controls. This will show controls on the side for large tablet screens
   // or on the bottom for phones. (For small tablets it will adjust the view a little bit).
   renderCameraControls() {
-    const dimensions = Dimensions.get('window');
-    const aspectRatio = dimensions.height / dimensions.width;
-    const isPhone = aspectRatio > 1.6;
+    console.log(
+      'takingPicture',
+      this.state.takingPicture,
+      'processingImage',
+      this.state.processingImage,
+    );
+
     const cameraIsDisabled =
       this.state.takingPicture || this.state.processingImage;
     const disabledStyle = {opacity: cameraIsDisabled ? 0.8 : 1};
-    if (!isPhone) {
-      if (dimensions.height < 500) {
-        return (
-          <View style={styles.buttonContainer}>
-            <View
-              style={[
-                styles.buttonActionGroup,
-                {
-                  flexDirection: 'row',
-                  alignItems: 'flex-end',
-                  marginBottom: 28,
-                },
-              ]}>
-              {this.renderFlashControl()}
-              <ScannerFilters
-                filterId={this.state.filterId}
-                onFilterIdChange={this.onFilterIdChange}
-              />
-              {this.props.hideSkip ? null : (
-                <View style={[styles.buttonGroup, {marginLeft: 8}]}>
-                  <TouchableOpacity
-                    style={[styles.button, disabledStyle]}
-                    onPress={cameraIsDisabled ? () => null : this.props.onSkip}
-                    activeOpacity={0.8}>
-                    <Icon
-                      name="add-circle-sharp"
-                      size={40}
-                      color="white"
-                      style={styles.buttonIcon}
-                    />
-                    <Text style={styles.buttonText}>Skip</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-            <View style={[styles.cameraOutline, disabledStyle]}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={styles.cameraButton}
-                onPress={this.capture}
-              />
-            </View>
-            <View style={[styles.buttonActionGroup, {marginTop: 28}]}>
-              <View style={styles.buttonGroup}>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={this.props.onCancel}
-                  activeOpacity={0.8}>
-                  <Icon
-                    name="ios-close-circle"
-                    size={40}
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        );
-      }
-      return (
-        <View style={styles.buttonContainer}>
-          <View
-            style={[
-              styles.buttonActionGroup,
-              {justifyContent: 'flex-end', marginBottom: 20},
-            ]}>
-            {this.renderFlashControl()}
-            <ScannerFilters
-              filterId={this.state.filterId}
-              onFilterIdChange={this.onFilterIdChange}
-            />
-          </View>
-          <View style={[styles.cameraOutline, disabledStyle]}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.cameraButton}
-              onPress={this.capture}
-            />
-          </View>
-          <View style={[styles.buttonActionGroup, {marginTop: 28}]}>
-            <View style={styles.buttonGroup}>
-              {this.props.hideSkip ? null : (
-                <TouchableOpacity
-                  style={[styles.button, disabledStyle]}
-                  onPress={cameraIsDisabled ? () => null : this.props.onSkip}
-                  activeOpacity={0.8}>
-                  <Icon
-                    name="ios-heart-circle"
-                    size={40}
-                    color="white"
-                    style={styles.buttonIcon}
-                  />
-                  <Text style={styles.buttonText}>Skip</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={this.props.onCancel}
-                activeOpacity={0.8}>
-                <Icon
-                  name="ios-close-circle"
-                  size={40}
-                  style={styles.buttonIcon}
-                />
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      );
-    }
 
-    return (
+    return this.state.capturedURI ? (
+      <View style={styles.buttonBottomContainer}>
+        <View style={styles.buttonGroup}>
+          <TouchableOpacity
+            style={[styles.button, disabledStyle]}
+            onPress={e => {
+              this.setState({
+                capturedURI: null,
+              });
+            }}
+            activeOpacity={0.8}>
+            <Text style={styles.buttonText}>Add More</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ) : (
       <>
         <View style={styles.buttonBottomContainer}>
           <View style={styles.buttonGroup}>
@@ -602,14 +499,15 @@ export default class App extends PureComponent {
               {this.props.hideSkip ? null : (
                 <TouchableOpacity
                   style={[styles.button, disabledStyle]}
-                  onPress={cameraIsDisabled ? () => null : this.props.onSkip}
+                  onPress={
+                    // cameraIsDisabled
+                    e => {
+                      this.setState({
+                        capturedURI: null,
+                      });
+                    }
+                  }
                   activeOpacity={0.8}>
-                  <Icon
-                    name="airplane"
-                    size={40}
-                    color="white"
-                    style={styles.buttonIcon}
-                  />
                   <Text style={styles.buttonText}>Skip</Text>
                 </TouchableOpacity>
               )}
@@ -623,28 +521,30 @@ export default class App extends PureComponent {
   // Renders the camera controls or a loading/processing state
   renderCameraOverlay() {
     let loadingState = null;
-    if (this.state.loadingCamera) {
-      loadingState = (
-        <View style={styles.overlay}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator color="white" />
-            <Text style={styles.loadingCameraMessage}>Loading Camera</Text>
-          </View>
-        </View>
-      );
-    } else if (this.state.processingImage) {
-      loadingState = (
-        <View style={styles.overlay}>
-          <View style={styles.loadingContainer}>
-            <View style={styles.processingContainer}>
-              <ActivityIndicator color="#333333" size="large" />
-              <Text style={{color: '#333333', fontSize: 30, marginTop: 10}}>
-                Processing
-              </Text>
+    if (!this.state.capturedURI) {
+      if (this.state.loadingCamera) {
+        loadingState = (
+          <View style={styles.overlay}>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="white" />
+              <Text style={styles.loadingCameraMessage}>Loading Camera</Text>
             </View>
           </View>
-        </View>
-      );
+        );
+      } else if (this.state.processingImage) {
+        loadingState = (
+          <View style={styles.overlay}>
+            <View style={styles.loadingContainer}>
+              <View style={styles.processingContainer}>
+                <ActivityIndicator color="#333333" size="large" />
+                <Text style={{color: '#333333', fontSize: 30, marginTop: 10}}>
+                  Processing
+                </Text>
+              </View>
+            </View>
+          </View>
+        );
+      }
     }
 
     return (
@@ -685,57 +585,66 @@ export default class App extends PureComponent {
       return (
         <View
           style={{
-            backgroundColor: 'rgba(0, 0, 0, 0)',
+            backgroundColor: 'white',
             position: 'relative',
             marginTop: previewSize.marginTop,
             marginLeft: previewSize.marginLeft,
             height: `${previewSize.height * 100}%`,
             width: `${previewSize.width * 100}%`,
           }}>
-          <Scanner
-            onPictureTaken={this.onPictureTaken}
-            onPictureProcessed={this.onPictureProcessed}
-            enableTorch={this.state.flashEnabled}
-            filterId={this.state.filterId}
-            ref={this.camera}
-            capturedQuality={0.6}
-            onRectangleDetected={({detectedRectangle}) =>
-              this.setState({detectedRectangle})
-            }
-            onDeviceSetup={this.onDeviceSetup}
-            onTorchChanged={({enabled}) =>
-              this.setState({flashEnabled: enabled})
-            }
-            style={styles.scanner}
-          />
-          <Image
-            style={{
-              width: 100,
-              height: 100,
-            }}
-            source={{
-              isStatic: true,
-              uri: this.state.capturedURI.initialImage,
-            }}
-          />
-          <Image
-            style={{
-              width: 50,
-              height: 50,
-            }}
-            source={{
-              isStatic: true,
-              uri: 'https://reactnative.dev/img/tiny_logo.png',
-            }}
-          />
+          {this.state.capturedURI?.initialImage ? (
+            <View>
+              <TextInput
+                style={{
+                  height: 40,
+                  margin: 12,
+                  padding: 10,
+                  color: 'black',
+                }}
+                placeholderTextColor="#000"
+                onChangeText={e => this.setState({documentTitle: e.value})}
+                value={this.state.documentTitle}
+                placeholder="useless placeholder"
+              />
+              <Image
+                style={{
+                  width: 100,
+                  height: 100,
+                }}
+                source={{
+                  isStatic: true,
+                  uri: this.state.capturedURI?.initialImage,
+                }}
+              />
+            </View>
+          ) : (
+            <Scanner
+              onPictureTaken={this.onPictureTaken}
+              onPictureProcessed={this.onPictureProcessed}
+              enableTorch={this.state.flashEnabled}
+              filterId={this.state.filterId}
+              ref={this.camera}
+              capturedQuality={0.6}
+              onRectangleDetected={({detectedRectangle}) =>
+                this.setState({detectedRectangle})
+              }
+              onDeviceSetup={this.onDeviceSetup}
+              onTorchChanged={({enabled}) =>
+                this.setState({flashEnabled: enabled})
+              }
+              style={styles.scanner}
+            />
+          )}
+
           {/* {rectangleOverlay} */}
-          <Animated.View
+
+          {/* <Animated.View
             style={{
               ...styles.overlay,
               backgroundColor: 'white',
               opacity: this.state.overlayFlashOpacity,
             }}
-          />
+          /> */}
           {this.renderCameraOverlay()}
         </View>
       );
@@ -783,12 +692,12 @@ export default class App extends PureComponent {
                 onPress={this.props.onSkip}
                 activeOpacity={0.8}>
                 <Icon
-                  name="ios-file-tray"
+                  name="md-add"
                   size={40}
                   color="white"
                   style={styles.buttonIcon}
                 />
-                <Text style={styles.buttonText}>Skip</Text>
+                <Text style={styles.buttonText}>Skip 01</Text>
               </TouchableOpacity>
             )}
           </View>
