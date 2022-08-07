@@ -14,6 +14,7 @@ import {
   View,
   Image,
   TextInput,
+  FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Scanner, {
@@ -190,8 +191,10 @@ export default class App extends PureComponent {
         previewHeightPercent: 1,
         previewWidthPercent: 1,
       },
-      capturedURI: null,
+      capturedURI: {},
       documentTitle: '',
+      capturedImagesList: [],
+      showCamera: true,
     };
 
     this.camera = React.createRef();
@@ -199,7 +202,10 @@ export default class App extends PureComponent {
   }
 
   componentDidMount() {
-    if (this.state.didLoadInitialLayout && !this.state.isMultiTasking) {
+    if (
+      this.state.didLoadInitialLayout &&
+      (!this.state.isMultiTasking || this.state.showCamera)
+    ) {
       this.turnOnCamera();
     }
   }
@@ -343,12 +349,15 @@ export default class App extends PureComponent {
   // The picture was taken and cached. You can now go on to using it.
   onPictureProcessed = event => {
     this.props.onPictureProcessed(event);
+    console.log(this.state.capturedURI, this.state.capturedImagesList);
     this.setState({
       takingPicture: false,
       processingImage: false,
       showScannerView: this.props.cameraIsOn || false,
       capturedURI: event,
       loadingCamera: false,
+      showCamera: false,
+      capturedImagesList: [...this.state.capturedImagesList, event],
     });
   };
 
@@ -442,14 +451,14 @@ export default class App extends PureComponent {
       this.state.takingPicture || this.state.processingImage;
     const disabledStyle = {opacity: cameraIsDisabled ? 0.8 : 1};
 
-    return this.state.capturedURI ? (
+    return !this.state.showCamera ? (
       <View style={styles.buttonBottomContainer}>
         <View style={styles.buttonGroup}>
           <TouchableOpacity
             style={[styles.button, disabledStyle]}
             onPress={e => {
               this.setState({
-                capturedURI: null,
+                showCamera: true,
               });
             }}
             activeOpacity={0.8}>
@@ -521,7 +530,7 @@ export default class App extends PureComponent {
   // Renders the camera controls or a loading/processing state
   renderCameraOverlay() {
     let loadingState = null;
-    if (!this.state.capturedURI) {
+    if (this.state.showCamera) {
       if (this.state.loadingCamera) {
         loadingState = (
           <View style={styles.overlay}>
@@ -572,9 +581,9 @@ export default class App extends PureComponent {
             borderColor="rgb(255,181,6)"
             borderWidth={4}
             // == These let you auto capture and change the overlay style on detection ==
-            detectedBackgroundColor="rgba(255,181,6, 0.3)"
+            detectedBackgroundColor="rgba(25,181,6, 0.3)"
             detectedBorderWidth={6}
-            detectedBorderColor="rgb(255,218,124)"
+            detectedBorderColor="rgb(25,218,124)"
             onDetectedCapture={this.capture}
             allowDetection
           />
@@ -592,7 +601,7 @@ export default class App extends PureComponent {
             height: `${previewSize.height * 100}%`,
             width: `${previewSize.width * 100}%`,
           }}>
-          {this.state.capturedURI?.initialImage ? (
+          {!this.state.showCamera ? (
             <View>
               <TextInput
                 style={{
@@ -606,15 +615,21 @@ export default class App extends PureComponent {
                 value={this.state.documentTitle}
                 placeholder="useless placeholder"
               />
-              <Image
-                style={{
-                  width: 100,
-                  height: 100,
-                }}
-                source={{
-                  isStatic: true,
-                  uri: this.state.capturedURI?.initialImage,
-                }}
+              <FlatList
+                data={this.state.capturedImagesList}
+                renderItem={({item}) => (
+                  <Image
+                    source={{
+                      isStatic: true,
+                      uri: item.croppedImage,
+                    }}
+                    style={{
+                      width: 200,
+                      height: 200,
+                      margin: 10,
+                    }}
+                  />
+                )}
               />
             </View>
           ) : (
@@ -636,7 +651,7 @@ export default class App extends PureComponent {
             />
           )}
 
-          {/* {rectangleOverlay} */}
+          {rectangleOverlay}
 
           {/* <Animated.View
             style={{
