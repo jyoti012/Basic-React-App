@@ -14,7 +14,11 @@
     "react-native": "0.68.0",
     "react-native-rectangle-scanner": "^1.0.10",
     "react-native-svg": "^12.3.0",
-    "react-native-vector-icons": "^9.1.0"
+    "react-native-vector-icons": "^9.1.0",
+    "react-native-tesseract-ocr": "^2.0.1",
+    "react-native-image-crop-picker": "^0.32.2",
+    "react-native-progress": "^4.0.3",
+    "@react-native-community/art": "^1.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
